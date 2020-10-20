@@ -1,4 +1,5 @@
-const puppeteer = require('puppeteer')
+const puppeteer = require( 'puppeteer' )
+const axios = require( 'axios' );
 
 describe('BT Migration Script', () => {
     it( 'All Process', async function () {
@@ -14,6 +15,31 @@ describe('BT Migration Script', () => {
 
         await page.goto( url )
 
+        const allCases = await axios({
+            url: 'http://localhost:5000/cases',
+            method: 'get'
+        })
+
+
+        // api call sample -------------------------------
+        const allCasesData = allCases.data
+
+        console.log('allCasesData', allCasesData )
+        
+        for ( let note of allCasesData ) {
+            console.log( 'note.case_number_dyn', note.case_number_dyn )
+            
+            const caseNote = await axios({
+                url: `http://localhost:5000/casenotes/${note.case_number_dyn}`,
+                method: 'get'
+            } )
+            
+            const caseNoteData = caseNote.data
+
+            console.log( 'caseNoteData', caseNoteData )
+        }
+        // api call sample finishes -------------------------
+
         const emailInput = 'input[type=email]'
         const passwordInput = 'input[type=password]'
         if ( emailInput ) {
@@ -26,7 +52,7 @@ describe('BT Migration Script', () => {
             await page.type( emailInput, credentials.username )
             await page.click( '.button', { clickCount: 1 })
             await page.waitForSelector( passwordInput )
-            await page.type( passwordInput, credentials.password, { delay: 750 })
+            await page.type( passwordInput, credentials.password, { delay: 1000 })
     
             await page.click( 'input[type=submit]', { clickCount: 1 } )
     
@@ -44,7 +70,7 @@ describe('BT Migration Script', () => {
         const btnNewContact = '#appRoot > div.Files.sp-App-root.has-footer.is-active.od-userSelect--enabled.sp-WebViewList-enable.sp-fullHeightLayouts > div.sp-App-body > div > div.Files-main > div.Files-mainColumn > div.Files-contentAreaFlexContainer > div.od-TopBar-item.od-TopBar-commandBar.od-TopBar-commandBar--suiteNavSearch > div > div > div > div > div > div > div > div.ms-OverflowSet.ms-CommandBar-primaryCommand.primarySet-87 > div:nth-child(1) > button'
 
         await page.click( btnNewContact, { clickCount: 1 } )
-        await page.waitForSelector( 'input[title="Given Name"]' );
+        await page.waitForSelector( 'input[title="Given Name"]' )
 
         await page.type( 'input[title="Given Name"]', "Burak", { delay: 100 } )
         await page.type( 'input[title="Surname"]', "Seyhan", { delay: 100 } )
@@ -62,11 +88,14 @@ describe('BT Migration Script', () => {
 
         await page.waitForSelector('#case-bc')
         const caseId = await page.$eval('#case-bc', element => element.textContent)
-        console.log('caseId', caseId)
+        console.log( 'caseId', caseId )
+        
+        // add the case notes through backend
+
         await page.goto( url )
         await page.waitForXPath( xpathBtnNewContact )
         await page.click( btnNewContact, { clickCount: 1 } )
-        await page.waitForSelector( 'input[title="Given Name"]' );
+        await page.waitForSelector( 'input[title="Given Name"]' )
 
         await browser.close()
     })
